@@ -15,10 +15,19 @@ struct Ativo{
 }
 
 #[derive(Debug, PartialEq)]
+struct OrdemExecutada{
+    identificador: usize,
+    ticker: String,
+    quantidade: f64,
+    preco_pago: f64,
+}
+
+#[derive(Debug, PartialEq)]
 struct MyApp{
 
     ativos_disponiveis: Vec<Ativo>,
     ativo_selecionado: Vec<usize>,
+    ordem_executada: Vec<OrdemExecutada>,
     quantidade_compra: String,
     saldo_conta: f64
 
@@ -48,7 +57,7 @@ impl Default for MyApp{
             risco: Risco::Alto,
             selecionado: false
         }], 
-        ativo_selecionado: Vec::new(), quantidade_compra: String::new(), saldo_conta: 10000.0 }
+        ativo_selecionado: Vec::new(), quantidade_compra: String::new(), saldo_conta: 10000.0, ordem_executada: Vec::new() }
     }
 }
 
@@ -83,6 +92,38 @@ impl eframe::App for MyApp {
                 for i in &self.ativos_disponiveis{
                     ui.label(&i.nome);
                 }
+            }
+
+        });
+
+        egui::TopBottomPanel::bottom("historico").resizable(true).max_height(200.0).show(ctx, |ui|{
+            ui.heading("Histórico");
+            ui.separator();
+            ui.add_space(10.0);
+
+            if !self.ativo_selecionado.is_empty(){
+
+                let item_selecionado = self.ativo_selecionado.get(0);
+                let historico = self.ordem_executada
+                .iter()
+                .filter(|f| f.identificador == *item_selecionado.unwrap())
+                .collect::<Vec<&OrdemExecutada>>();
+
+                if !historico.is_empty(){
+
+                    ui.horizontal_centered(|side_ui|{
+
+                        for i in historico{
+                            side_ui.label(&i.ticker);
+                            side_ui.label(format!("Quantidade {}", i.quantidade));
+                            side_ui.label(format!("R$ {:.2}", i.preco_pago));
+                            side_ui.label(format!("Valor total R$ {:.2}", (i.quantidade * i.preco_pago)));
+                        }
+
+                    });
+
+                }
+
             }
 
         });
@@ -130,6 +171,11 @@ impl eframe::App for MyApp {
                             if col_internal.button("Comprar").clicked(){
 
                                 self.saldo_conta -= qtde_calc * ativo_diposnivel.preco_atual;
+                                self.ordem_executada.push(OrdemExecutada { 
+                                    identificador: *item.unwrap(),
+                                    ticker: ativo_diposnivel.ticker.clone(), 
+                                    quantidade: qtde_calc, 
+                                    preco_pago: ativo_diposnivel.preco_atual });
                                 liberar_ativo = true;
 
                             }
@@ -149,7 +195,7 @@ impl eframe::App for MyApp {
 fn main() -> eframe::Result<()>{
     
     let options = eframe::NativeOptions{
-        viewport: egui::ViewportBuilder::default().with_inner_size([800.0,400.0]), //w - h
+        viewport: egui::ViewportBuilder::default().with_inner_size([800.0,600.0]), //w - h
         ..Default::default()
     };
 
