@@ -111,14 +111,28 @@ impl eframe::App for MyApp {
 
                 if !historico.is_empty(){
 
-                    ui.horizontal_centered(|side_ui|{
+                    egui::ScrollArea::both().show(ui, |scroll_grid|{
 
-                        for i in historico{
-                            side_ui.label(&i.ticker);
-                            side_ui.label(format!("Quantidade {}", i.quantidade));
-                            side_ui.label(format!("R$ {:.2}", i.preco_pago));
-                            side_ui.label(format!("Valor total R$ {:.2}", (i.quantidade * i.preco_pago)));
-                        }
+                        egui::Grid::new("grid_transacoes")
+                        .striped(true)
+                        .spacing([70.0,10.0])
+                        .show(scroll_grid, |grid|{
+
+                            grid.label(egui::RichText::new("Ativo").strong().color(Color32::LIGHT_GRAY));
+                            grid.label(egui::RichText::new("Qtd").strong().color(Color32::LIGHT_GRAY));
+                            grid.label(egui::RichText::new("Preço Pago").strong().color(Color32::LIGHT_GRAY));
+                            grid.label(egui::RichText::new("Total da Ordem").strong().color(Color32::LIGHT_GRAY));
+                            grid.end_row();
+
+                            for i in historico{
+                                grid.label(&i.ticker);
+                                grid.label(format!("{}", i.quantidade));
+                                grid.label(format!("R$ {:.2}", i.preco_pago));
+                                grid.label(format!("R$ {:.2}", (i.quantidade * i.preco_pago)));
+                                grid.end_row();
+                            }
+
+                        });
 
                     });
 
